@@ -8,6 +8,7 @@ import (
 // the values read by viper from file or enviroment variables
 type Config struct {
 	Enviroment string `mapstructure:"ENVIROMENT"`
+	RabbitURL  string `mapstructure:"RABBIT_URL"`
 	// HTTPAddressString string `mapstructure:"HTTP_ADDRESS_STRING"`
 	// AuthService       string `mapstructure:"AUTH_SERVICE"`
 	// LogService    string `mapstructure:"LOG_SERVICE"`
