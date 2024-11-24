@@ -24,7 +24,7 @@ func main() {
 		// log.Debug().Msgf("config values: %+v", conf)
 	}
 
-	rabbitConn, err := tryConnectToRabbitIn(5, conf)
+	rabbitConn, err := tryConnectToRabbitIn(7, conf)
 	if err != nil {
 		log.Fatal().Msg("failed to establish the connection to rabbitmq")
 	}
@@ -40,7 +40,7 @@ func tryConnectToRabbitIn(backOffLimit int64, conf util.Config) (*amqp.Connectio
 	// wait until rabbit is ready
 	for {
 		// check if we reach the backOffLimit the stop trying and return an error
-		if counts > backOffLimit {
+		if counts >= backOffLimit {
 			msg := fmt.Sprintf("failed connect to rabbit with %d tries", backOffLimit)
 			log.Error().Msg(msg)
 			return nil, fmt.Errorf(msg)
@@ -51,7 +51,7 @@ func tryConnectToRabbitIn(backOffLimit int64, conf util.Config) (*amqp.Connectio
 			log.Error().Err(err).Msg("rabbitmq not yet ready...")
 			time.Sleep(backOff)
 			counts++
-			backOff = time.Duration(math.Pow(float64(counts), 2)) * time.Second
+			backOff = time.Duration(math.Pow(2, float64(counts))) * time.Second
 			continue
 		}
 		log.Debug().Msg("connected to rabbitmq")
