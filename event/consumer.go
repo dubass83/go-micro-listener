@@ -94,7 +94,7 @@ func handlePayload(payload Payload) {
 		log.Info().Msg("send event to the logger service")
 		err := logEvent(payload)
 		if err != nil {
-			log.Error().Err(err).Msg("failed to send event tot the logger service")
+			log.Error().Err(err).Msg("failed to send event to the logger service")
 		}
 
 	case "auth":
@@ -104,7 +104,7 @@ func handlePayload(payload Payload) {
 		log.Info().Msg("send event to the logger service as default case")
 		err := logEvent(payload)
 		if err != nil {
-			log.Error().Err(err).Msg("failed to send event tot the logger service")
+			log.Error().Err(err).Msg("failed to send event to the logger service")
 		}
 	}
 }
