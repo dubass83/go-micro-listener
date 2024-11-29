@@ -1,6 +1,8 @@
 package event
 
 import (
+	"encoding/json"
+
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/rs/zerolog/log"
 )
@@ -63,6 +65,51 @@ func (consumer *Consumer) Listen(topics []string) error {
 			log.Error().Err(err).Msg("failed to bind an exchange to the queue")
 			return err
 		}
-
 	}
+
+	messages, err := ch.Consume(q.Name, "", true, false, false, false, nil)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to consume messages from the queue")
+		return err
+	}
+
+	forever := make(chan bool)
+	go func() {
+		for d := range messages {
+			var payload Payload
+			_ = json.Unmarshal(d.Body, &payload)
+			go handlePayload(payload)
+		}
+	}()
+	log.Info().Msgf("waiting for message [Exchange, Queue] [logs_topics, %s]", q.Name)
+	<-forever
+
+	return nil
+}
+
+func handlePayload(payload Payload) {
+	switch payload.Name {
+
+	case "log", "event":
+		log.Info().Msg("send event to the logger service")
+		err := logEvent(payload)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to send event tot the logger service")
+		}
+
+	case "auth":
+		log.Info().Msg("send event to the auth service")
+
+	default:
+		log.Info().Msg("send event to the logger service as default case")
+		err := logEvent(payload)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to send event tot the logger service")
+		}
+	}
+}
+
+func logEvent(event Payload) error {
+	log.Info().Msgf("event=%v", event)
+	return nil
 }
