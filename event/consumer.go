@@ -1,10 +1,17 @@
 package event
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
+	"net/http"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/rs/zerolog/log"
+)
+
+const (
+	LogService = "http://logger:8080"
 )
 
 type Consumer struct {
@@ -15,6 +22,12 @@ type Consumer struct {
 type Payload struct {
 	Name string `json:"name"`
 	Data string `json:"data"`
+}
+
+type jsonResponse struct {
+	Error   bool   `json:"error"`
+	Massage string `json:"massage"`
+	Data    any    `json:"data,omitempty"`
 }
 
 func NewConsumer(conn *amqp.Connection) (Consumer, error) {
@@ -109,7 +122,33 @@ func handlePayload(payload Payload) {
 	}
 }
 
-func logEvent(event Payload) error {
-	log.Info().Msgf("event=%v", event)
+func logEvent(logs Payload) error {
+	log.Debug().Msg("post log into logger service")
+	jsonData, _ := json.MarshalIndent(logs, "", "\t")
+	logURL := fmt.Sprintf("%s/log", LogService)
+	log.Debug().Msgf("logURL: %s", logURL)
+	request, err := http.NewRequest("POST", logURL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Error().Err(err).Msg("failed generate POST request")
+		return err
+	}
+
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to create http Client")
+		return err
+	}
+	defer response.Body.Close()
+
+	// if response.StatusCode == http.StatusUnauthorized {
+	// 	errorJSON(w, errors.New("invalid credentials"))
+	// 	return
+	// }
+	if response.StatusCode != http.StatusAccepted {
+		log.Error().Err(err).Msg("return bad status code in response")
+		return err
+	}
+
 	return nil
 }
