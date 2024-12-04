@@ -7,7 +7,7 @@ import (
 func declareExchange(ch *amqp.Channel) error {
 	return ch.ExchangeDeclare(
 		"logs_topic",
-		"topics",
+		"topic",
 		true,
 		false,
 		false,
