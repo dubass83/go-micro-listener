@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/dubass83/go-micro-listener/event"
 	"github.com/dubass83/go-micro-listener/util"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/rs/zerolog"
@@ -23,12 +24,26 @@ func main() {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 		// log.Debug().Msgf("config values: %+v", conf)
 	}
-
+	// try to connect to rabbitmq
 	rcon, err := rabbitConn(5, conf)
 	if err != nil {
 		log.Fatal().Msg("failed to establish the connection to rabbitmq")
 	}
 	defer rcon.Close()
+
+	log.Info().Msg("listening for and consuming RabbitMQ messages...")
+
+	// create consumer
+	consumer, err := event.NewConsumer(rcon)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to create consumer")
+	}
+
+	// watch the queue and consume events
+	err = consumer.Listen([]string{"log.INFO", "log.WARNING", "log.ERROR"})
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to consume events from the queu")
+	}
 
 }
 
