@@ -127,6 +127,7 @@ func logEvent(logs Payload) error {
 	jsonData, _ := json.MarshalIndent(logs, "", "\t")
 	logURL := fmt.Sprintf("%s/log", LogService)
 	log.Debug().Msgf("logURL: %s", logURL)
+	log.Debug().Msgf("jsonData: %s", jsonData)
 	request, err := http.NewRequest("POST", logURL, bytes.NewBuffer(jsonData))
 	if err != nil {
 		log.Error().Err(err).Msg("failed generate POST request")
